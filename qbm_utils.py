@@ -170,7 +170,7 @@ def append_evolution(qc:QuantumCircuit, h:np.array , J:np.array, gamma:float, al
     return qc
 
 class IsingEnergyFunction():
-    """ A class to build the Ising Hamiltonian 
+    """ A class to build the Ising Hamiltonian from data
     
     """
     def __init__(self, J: np.array, h: np.array) -> None:
