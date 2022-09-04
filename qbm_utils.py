@@ -18,9 +18,9 @@ from qiskit.circuit.library import *
 from qiskit.algorithms import *
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit #, InstructionSet
 from qiskit import quantum_info, IBMQ, Aer
-from qiskit.quantum_info import partial_trace, Statevector, state_fidelity
+from qiskit.quantum_info import partial_trace, Statevector, state_fidelity, Pauli
 from qiskit.utils import QuantumInstance
-from qiskit.extensions import HamiltonianGate
+from qiskit.extensions import HamiltonianGate, RZZGate, RZGate, RXGate
 from qiskit.circuit.quantumregister import Qubit
 from qiskit.visualization import plot_histogram, plot_state_qsphere, plot_bloch_multivector, plot_bloch_vector
 
@@ -123,3 +123,70 @@ def measure_and_plot(qc: QuantumCircuit, shots:int= 1024, show_counts:bool= Fals
     if return_counts: return counts
     else: return plot_histogram(counts)
  
+
+
+def construct_h1(a:float, b:float, time:float= 1.00 ):
+    """ Function to construct a circuit implementing single qubit unitaries
+        i.e;  H1_i = a_i * X_i + b_i * Z_i
+
+        ARGS:
+        ----
+            a: [float] 
+                Coefficient of 'X' operator
+
+            b: [float] 
+                Coefficient of 'Z' operator
+            
+            time: Optional[float]
+                    Time of evolution while implemnting using 'HamiltonianGate' class 
+        
+        RETURNS:
+        -------
+            qiskit.HamiltonianGate object 
+
+    """
+
+    return HamiltonianGate( a * Pauli('X').to_matrix() + b * Pauli('Z').to_matrix(), time )
+
+
+def construct_h2(J:float, time:float = 1.00 ):
+    """ Function to construct circuit implmenting RZZ rotations 
+
+    """
+    pass
+
+def append_evolution(qc:QuantumCircuit, h:np.array , J:np.array, gamma:float, alpha:float, time:float, is_terminal_step= False):
+
+    for qubit in range(len(qc.qubits)):
+        qc.append(HamiltonianGate( gamma * Pauli('X').to_matrix() + (1 - gamma) * alpha * h[qubit] * Pauli('Z').to_matrix(), time, label= 'h_'+str(qubit) ), [ qc.qubits[qubit]] )
+    
+    if not is_terminal_step:    
+        for qubit in range( 0, len(qc.qubits), 2):
+            qc.append( RZZGate(J[qubit][qubit+1], label= 'J_'+str(qubit)+str(qubit+1)), [qc.qubits[qubit], qc.qubits[qubit+1]]  )
+        for qubit in range( 1, len(qc.qubits)-1 , 2):
+            qc.append( RZZGate(J[qubit][qubit+1], label= 'J_'+str(qubit)+str(qubit+1)), [qc.qubits[qubit], qc.qubits[qubit+1]]  )
+    
+    qc.barrier()
+    return qc
+
+class IsingEnergyFunction():
+    """ A class to build the Ising Hamiltonian 
+    
+    """
+    def __init__(self, J: np.array, h: np.array) -> None:
+        self.J = J
+        self.h = h
+        self.num_spins = len(h)
+    
+    def get_energy(self, state:Union[str, np.array] )-> float:
+
+        if isinstance(state, str):
+            state = np.array( [int(list(s)[i]) for i in range(len(s))])
+            energy =  np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
+            return energy
+        else:
+            return np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
+    
+    def get_boltzmann_prob(self, state:Union[str, np.array], beta:float= 1.0) -> float:
+
+        return np.exp( -1 * beta * self.get_energy(state) )
