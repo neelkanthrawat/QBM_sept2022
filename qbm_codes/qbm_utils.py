@@ -181,7 +181,7 @@ class IsingEnergyFunction():
     def get_energy(self, state:Union[str, np.array] )-> float:
 
         if isinstance(state, str):
-            state = np.array( [int(list(s)[i]) for i in range(len(s))])
+            state = np.array( [int(list(state)[i]) for i in range(len(state))])
             energy =  np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
             return energy
         else:
