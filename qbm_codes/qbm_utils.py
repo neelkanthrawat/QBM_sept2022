@@ -20,7 +20,8 @@ from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit #, Instruc
 from qiskit import quantum_info, IBMQ, Aer
 from qiskit.quantum_info import partial_trace, Statevector, state_fidelity, Pauli
 from qiskit.utils import QuantumInstance
-from qiskit.extensions import HamiltonianGate, RZZGate, RZGate, RXGate
+from qiskit.extensions import HamiltonianGate
+from qiskit.circuit.library import RZZGate, RZGate, RXGate
 from qiskit.circuit.quantumregister import Qubit
 from qiskit.visualization import plot_histogram, plot_state_qsphere, plot_bloch_multivector, plot_bloch_vector
 
@@ -157,10 +158,10 @@ def construct_h2(J:float, time:float = 1.00 ):
 
 def append_evolution(qc:QuantumCircuit, h:np.array , J:np.array, gamma:float, alpha:float, time:float, is_terminal_step= False):
 
-    for qubit in range(len(qc.qubits)):
+    for qubit in range(len(qc.qubits)):# H1
         qc.append(HamiltonianGate( gamma * Pauli('X').to_matrix() + (1 - gamma) * alpha * h[qubit] * Pauli('Z').to_matrix(), time, label= 'h_'+str(qubit) ), [ qc.qubits[qubit]] )
     
-    if not is_terminal_step:    
+    if not is_terminal_step:   # H2
         for qubit in range( 0, len(qc.qubits), 2):
             qc.append( RZZGate(J[qubit][qubit+1], label= 'J_'+str(qubit)+str(qubit+1)), [qc.qubits[qubit], qc.qubits[qubit+1]]  )
         for qubit in range( 1, len(qc.qubits)-1 , 2):
