@@ -64,7 +64,8 @@ def measure_and_plot(qc: QuantumCircuit, shots:int= 1024, show_counts:bool= Fals
             cntrl_specifier : 'int' 
                                 inidicates whihch of the control registers to meausure, 
                                 for eg. cntrl_specifier= 2 refers to the first control ancilla cntrl_2
-                                cntrl_specifier= 'all' refers to all the ancillas                                                           
+                                cntrl_specifier= 'all' refers to all the ancillas   
+                                                                                        
         RETURNS:
         -------
             plots histogram over the computational basis states
