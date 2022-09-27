@@ -193,7 +193,7 @@ def initialise_qc(n_spins:int, bitstring:str):
   where_x_gate=[qc_in.qubits[len_str_in-1-i] for i in range(0,len(bitstring)) if bitstring[i]=='1']
   if len(where_x_gate)!=0:
     qc_in.x(where_x_gate)
-  return qc_in, spins, creg_final
+  return qc_in
 
 
 class IsingEnergyFunction():
