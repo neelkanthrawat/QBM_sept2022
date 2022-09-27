@@ -7,6 +7,7 @@
 # from tkinter.tix import Tree
 import numpy as np
 from numpy import pi
+import pandas as pd 
 import math
 import seaborn as sns
 from IPython.display import Image
@@ -203,6 +204,12 @@ class IsingEnergyFunction():
         self.J = J
         self.h = h
         self.num_spins = len(h)
+
+    def get_J(self):
+        return self.J
+    
+    def get_h(self):
+        return self.h
     
     def get_energy(self, state:Union[str, np.array] )-> float:
 
@@ -216,6 +223,9 @@ class IsingEnergyFunction():
     def get_boltzmann_prob(self, state:Union[str, np.array], beta:float= 1.0) -> float:
 
         return np.exp( -1 * beta * self.get_energy(state) )
+
+    def get_observable_expectation() -> float:
+        pass
 
 ################################################################################################
                                 ##  Classical MCMC routines ##
@@ -275,7 +285,7 @@ def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_
                                 ##  Qunatum MCMC routines ##
 ################################################################################################
 
-def run_qc_quantum_step(qc_initialised_to_s:QuantumCircuit, h, J, alpha,n_spins:int, num_trotter_steps=10, time=0.8)->str:
+def run_qc_quantum_step(qc_initialised_to_s:QuantumCircuit, model:IsingEnergyFunction, alpha,n_spins:int, num_trotter_steps=10, time=0.8)->str:
 
     '''     
     Takes in a qc initialized to some state "s". After performing unitary evolution U=exp(-iHt)
@@ -287,6 +297,10 @@ def run_qc_quantum_step(qc_initialised_to_s:QuantumCircuit, h, J, alpha,n_spins:
     num_trotter_steps: (default 10)
     time: For how long you want to evolve.
     '''
+
+    h = model.get_h()
+    J = model.get_J()
+    
     for _ in range(num_trotter_steps):
         append_evolution(qc_initialised_to_s, h, J ,gamma=np.random.random(), alpha=alpha, time=time)
     append_evolution(qc_initialised_to_s, h, J , gamma=0.1, alpha=alpha, time=time, is_terminal_step=True)
@@ -297,13 +311,15 @@ def run_qc_quantum_step(qc_initialised_to_s:QuantumCircuit, h, J, alpha,n_spins:
     # run the circuit
     #creg_final=ClassicalRegister(n_spins, name= 'creg_f')
     num_shots=1
-    qc_initialised_to_s.measure(qc_initialised_to_s.qregs[0], qc_initialised_to_s.cregs[0])
+    quantum_registers_for_spins=qc_initialised_to_s.qregs[0]
+    classical_register=qc_initialised_to_s.cregs[0]
+    qc_initialised_to_s.measure(quantum_registers_for_spins,classical_register)
     state_obtained_dict=execute(qc_initialised_to_s, shots= num_shots, backend= qsm).result().get_counts()
     state_obtained=list(state_obtained_dict.keys())[0]#since there is only one element
     return state_obtained
 
 
-def quantum_enhanced_mcmc(N_hops:int, num_spins:int, num_elems:int,model, h,J, alpha, num_trotter_steps=10, return_last_n_states=500):
+def quantum_enhanced_mcmc(N_hops:int, num_spins:int, num_elems:int, model:IsingEnergyFunction, alpha, num_trotter_steps=10, return_last_n_states=500):
     ''' 
     Args: 
     Nhops: Number of time you want to run mcmc
@@ -317,11 +333,13 @@ def quantum_enhanced_mcmc(N_hops:int, num_spins:int, num_elems:int,model, h,J, a
     current_state=f'{np.random.randint(0,num_elems):0{num_spins}b}'# bin_next_state=f'{next_state:0{num_spins}b}'
     print("starting with: ", current_state) 
     # initialise quantum circuit to current_state
-    qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)
+    qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)[0]
+    #print("qc_s is:"); print(qc_s.draw())
     for i in range(0, N_hops):
+        #print("i: ", i)
         states.append(current_state)
         # get sprime
-        s_prime=run_qc_quantum_step(qc_initialised_to_s=qc_s, h=h, J=J, alpha=alpha, n_spins=num_spins, num_trotter_steps=num_trotter_steps, time=0.8)
+        s_prime=run_qc_quantum_step(qc_initialised_to_s=qc_s, model= model, alpha=alpha, n_spins=num_spins, num_trotter_steps=num_trotter_steps, time=0.8)
         # accept/reject s_prime 
         energy_s=model.get_energy(current_state)
         energy_sprime=model.get_energy(s_prime)
