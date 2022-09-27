@@ -255,7 +255,7 @@ def classical_loop_accepting_state(s_init:str, s_prime:str,energy_s:float,energy
     
     return new_state
 
-def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_n_states=500):
+def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_n_states=500, store_observables= True, observables:list= ['acceptance','energy'], return_history= True ):
     ''' 
     Args: 
     Nhops: Number of time you want to run mcmc
@@ -269,6 +269,10 @@ def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_
     states=[]
     current_state=f'{np.random.randint(0,num_elems):0{num_spins}b}'# bin_next_state=f'{next_state:0{num_spins}b}'
     print("starting with: ", current_state) 
+
+    ## initialiiise observables
+    observable_dict = dict([ (elem, []) for elem in observables ])
+
     for i in range(0, N_hops):
         states.append(current_state)
         # get sprime
@@ -278,8 +282,18 @@ def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_
         energy_sprime=model.get_energy(s_prime)
         next_state= classical_loop_accepting_state(current_state, s_prime, energy_s, energy_sprime,temp=1)
         current_state= next_state
+        if store_observables:  ## store the observables 
+          
+          if next_state == s_prime: observable_dict['acceptance'].append('True')
+          else: observable_dict['acceptance'].append('False')
+          observable_dict['energy'].append(model.get_energy(next_state))
+
+        ## reinitiate
+        qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)
     
-    return Counter(states[-return_last_n_states:])# returns dictionary of occurences for last 500 states
+    if return_history: return Counter(states[-return_last_n_states:]), pd.DataFrame(observable_dict)
+    else: return Counter(states[-return_last_n_states:])# returns dictionary of occurences for last 500 states
+
 
 ################################################################################################
                                 ##  Qunatum MCMC routines ##
@@ -319,7 +333,7 @@ def run_qc_quantum_step(qc_initialised_to_s:QuantumCircuit, model:IsingEnergyFun
     return state_obtained
 
 
-def quantum_enhanced_mcmc(N_hops:int, num_spins:int, num_elems:int, model:IsingEnergyFunction, alpha, num_trotter_steps=10, return_last_n_states=500):
+def quantum_enhanced_mcmc(N_hops:int, num_spins:int, num_elems:int, model:IsingEnergyFunction, alpha, num_trotter_steps=10, return_last_n_states=500, store_observables= True, observables:list= ['acceptance','energy'], return_history= True ):
     ''' 
     Args: 
     Nhops: Number of time you want to run mcmc
@@ -332,9 +346,13 @@ def quantum_enhanced_mcmc(N_hops:int, num_spins:int, num_elems:int, model:IsingE
     states=[]
     current_state=f'{np.random.randint(0,num_elems):0{num_spins}b}'# bin_next_state=f'{next_state:0{num_spins}b}'
     print("starting with: ", current_state) 
-    # initialise quantum circuit to current_state
-    qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)[0]
+    ## initialise quantum circuit to current_state
+    qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)
     #print("qc_s is:"); print(qc_s.draw())
+
+    ## intialise observables
+    observable_dict = dict([ ( elem, []  ) for elem in observables ])
+
     for i in range(0, N_hops):
         #print("i: ", i)
         states.append(current_state)
@@ -344,8 +362,18 @@ def quantum_enhanced_mcmc(N_hops:int, num_spins:int, num_elems:int, model:IsingE
         energy_s=model.get_energy(current_state)
         energy_sprime=model.get_energy(s_prime)
         next_state= classical_loop_accepting_state(current_state, s_prime, energy_s, energy_sprime,temp=1)
+        
         if current_state!=next_state:
           current_state= next_state
+
+        if store_observables:  ## store the observables 
+          
+          if next_state == s_prime: observable_dict['acceptance'].append('True')
+          else: observable_dict['acceptance'].append('False')
+          observable_dict['energy'].append(model.get_energy(next_state))
+
+        ## reinitiate
         qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)
     
-    return Counter(states[-return_last_n_states:])# returns dictionary of occurences for last 500 states
+    if return_history: return Counter(states[-return_last_n_states:]), pd.DataFrame(observable_dict)
+    else: return Counter(states[-return_last_n_states:])# returns dictionary of occurences for last 500 states
