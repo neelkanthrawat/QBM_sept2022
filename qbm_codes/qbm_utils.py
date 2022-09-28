@@ -14,6 +14,10 @@ from IPython.display import Image
 import matplotlib.pyplot as plt
 from typing import Mapping, Union, Iterable, Optional
 from collections import Counter
+import itertools
+from tqdm import tqdm
+# import function 
+
 
 from qiskit import *
 from qiskit.circuit.library import *
@@ -200,9 +204,10 @@ class IsingEnergyFunction():
     """ A class to build the Ising Hamiltonian from data
     
     """
-    def __init__(self, J: np.array, h: np.array) -> None:
+    def __init__(self, J: np.array, h: np.array, beta: float = 1.0) -> None:
         self.J = J
         self.h = h
+        self.beta = beta
         self.num_spins = len(h)
 
     def get_J(self):
@@ -220,12 +225,48 @@ class IsingEnergyFunction():
         else:
             return np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
     
-    def get_boltzmann_prob(self, state:Union[str, np.array], beta:float= 1.0) -> float:
+    def get_partition_sum(self, beta:float= 1.0):           ## is computationally expensive
 
-        return np.exp( -1 * beta * self.get_energy(state) )
+        all_configs = np.array(list(itertools.product([1,0], repeat= self.num_spins)))
+        return sum([ self.get_boltzmann_prob(configbeta= beta) for config in all_configs ])
 
-    def get_observable_expectation() -> float:
+    def get_boltzmann_prob(self, state:Union[str, np.array], beta:float= 1.0, normalised= False ) -> float:
+
+        if normalised :
+            return np.exp( -1 * beta * self.get_energy(state) ) / self.get_partition_sum(beta)
+
+        else:    
+            return np.exp( -1 * beta * self.get_energy(state) )
+
+    def get_observable_expectation(self, observable, beta:float= 1.0) -> float:
+        """ Return expectation value of a classical observables 
+
+         ARGS :
+         ----
+         observable: Must be a function of the spin configuration which takes an 'np.array' of binary elements as input argument and returns a 'float'   
+         beta: inverse temperature
+
+        """
+        all_configs = np.array(list(itertools.product([1,0], repeat= self.num_spins)))
+        partition_sum = sum([ self.get_boltzmann_prob(config) for config in all_configs ])
+        
+        return sum([ self.get_boltzmann_prob(config) *  observable(config) * (1 / partition_sum) for config in all_configs ])
+
+    def get_entropy(self, beta:float= 1.00)-> float:
+
+        return np.log(self.get_partition_sum(beta))  - beta * self.get_observable_expectation(self.get_energy)
+
+    def get_kldiv(self, prob_dict:dict):
+
         pass
+
+
+
+
+        
+
+
+
 
 ################################################################################################
                                 ##  Classical MCMC routines ##
@@ -273,7 +314,7 @@ def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_
     ## initialiiise observables
     observable_dict = dict([ (elem, []) for elem in observables ])
 
-    for i in range(0, N_hops):
+    for i in tqdm(range(0, N_hops)):
         states.append(current_state)
         # get sprime
         s_prime=classical_transition(num_spins)
@@ -353,7 +394,7 @@ def quantum_enhanced_mcmc(N_hops:int, num_spins:int, num_elems:int, model:IsingE
     ## intialise observables
     observable_dict = dict([ ( elem, []  ) for elem in observables ])
 
-    for i in range(0, N_hops):
+    for i in tqdm(range(0, N_hops)):
         #print("i: ", i)
         states.append(current_state)
         # get sprime
