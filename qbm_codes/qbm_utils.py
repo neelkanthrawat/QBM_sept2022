@@ -220,10 +220,10 @@ class IsingEnergyFunction():
 
         if isinstance(state, str):
             state = np.array( [int(list(state)[i]) for i in range(len(state))])
-            energy =  np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
+            energy =  0.5*np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
             return energy
         else:
-            return np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
+            return 0.5*np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
     
     def get_partition_sum(self, beta:float= 1.0):           ## is computationally expensive
 
