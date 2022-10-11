@@ -217,13 +217,16 @@ class IsingEnergyFunction():
         return self.h
     
     def get_energy(self, state:Union[str, np.array] )-> float:
+        """ 'state' should be a bipolar state if it is an array"""
 
         if isinstance(state, str):
-            state = np.array( [int(list(state)[i]) for i in range(len(state))])
+            state = np.array([ -1 if elem=='0' else 1 for elem in state ])
+            # state = np.array( [int(list(state)[i]) for i in range(len(state))])
             energy =  0.5*np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
             return energy
         else:
             return 0.5*np.dot(state.transpose(), self.J.dot(state)) + np.dot(self.h.transpose(), state )
+    
     
     def get_partition_sum(self, beta:float= 1.0):           ## is computationally expensive
 
