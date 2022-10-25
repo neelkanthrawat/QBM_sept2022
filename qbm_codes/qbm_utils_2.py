@@ -256,7 +256,7 @@ def classical_loop_accepting_state(s_init:str, s_prime:str,energy_s:float,energy
       new_state=s_prime
     return new_state
 
-def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_n_states=500, return_both=False, temp=1 ):
+def classical_mcmc(N_hops:int, num_spins:int,initial_state:str ,num_elems:int, model, return_last_n_states=500, return_both=False, temp=1 ):
     ''' 
     Args: 
     Nhops: Number of time you want to run mcmc
@@ -271,7 +271,8 @@ def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_
     Last 'dict_count_return_last_n_states' elements of states so collected (default value=500). one can then deduce the distribution from it! 
     '''
     states=[]
-    current_state=f'{np.random.randint(0,num_elems):0{num_spins}b}'# bin_next_state=f'{next_state:0{num_spins}b}'
+    #current_state=f'{np.random.randint(0,num_elems):0{num_spins}b}'# bin_next_state=f'{next_state:0{num_spins}b}'
+    current_state=initial_state
     print("starting with: ", current_state) 
     states.append(current_state)
 
@@ -457,16 +458,17 @@ def quantum_enhanced_mcmc(N_hops:int, num_spins:int,initial_state:str ,num_elems
     '''
     states=[]
     print("starting with: ", initial_state) 
+
     ## initialise quantum circuit to current_state
     qc_s=initialise_qc(n_spins=num_spins, bitstring=initial_state)
     current_state=initial_state
+    states.append(current_state)
     ## intialise observables
     list_after_transition=[]
     list_after_acceptance_step=[]
 
     for i in tqdm(range(0, N_hops)):
         #print("i: ", i)
-        states.append(current_state)
         # get sprime
         s_prime=run_qc_quantum_step(qc_initialised_to_s=qc_s, model= model, alpha=alpha, n_spins=num_spins)
         list_after_transition.append(s_prime)
@@ -476,7 +478,7 @@ def quantum_enhanced_mcmc(N_hops:int, num_spins:int,initial_state:str ,num_elems
         next_state= classical_loop_accepting_state(current_state, s_prime, energy_s, energy_sprime,temp=temp)
         current_state=next_state
         list_after_acceptance_step.append(current_state)
-
+        states.append(current_state)
         ## reinitiate
         qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)
       
