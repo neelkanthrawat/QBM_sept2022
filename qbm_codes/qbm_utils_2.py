@@ -273,6 +273,7 @@ def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_
     states=[]
     current_state=f'{np.random.randint(0,num_elems):0{num_spins}b}'# bin_next_state=f'{next_state:0{num_spins}b}'
     print("starting with: ", current_state) 
+    states.append(current_state)
 
     ## initialiiise observables
     #observable_dict = dict([ (elem, []) for elem in observables ])
@@ -280,7 +281,6 @@ def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_
     list_after_acceptance_step=[]
 
     for i in tqdm(range(0, N_hops)):
-        states.append(current_state)
         # get sprime
         s_prime=classical_transition(num_spins)
         list_after_transition.append(s_prime)
@@ -290,7 +290,8 @@ def classical_mcmc(N_hops:int, num_spins:int, num_elems:int, model, return_last_
         next_state= classical_loop_accepting_state(current_state, s_prime, energy_s, energy_sprime,temp=temp)
         current_state= next_state
         list_after_acceptance_step.append(current_state)
-        #WE SON;T NEED TO DO THIS! # reinitiate
+        states.append(current_state)
+        #WE DON;T NEED TO DO THIS! # reinitiate
         #qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)
     
     # returns dictionary of occurences for last "return_last_n_states" states
