@@ -193,12 +193,19 @@ class IsingEnergyFunction:
         self.h = h
         self.beta = beta
         self.num_spins = len(h)
+        self.alpha = np.sqrt(self.num_spins) / np.sqrt( sum([J[i][j]**2 for i in range(self.num_spins) for j in range(i)]) + sum([h[j]**2 for j in range(self.num_spins)])  )
 
     def get_J(self):
         return self.J
 
     def get_h(self):
         return self.h
+    
+    def get_num_spins(self):
+        return self.num_spins
+    
+    def get_alpha(self):
+        return self.alpha
 
     def get_energy(self, state: Union[str, np.array]) -> float:
         """'state' should be a bipolar state if it is an array"""
