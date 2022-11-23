@@ -8,7 +8,8 @@ import math
 from collections import Counter
 from typing import Iterable, Mapping, Optional, Union
 import numba 
-from numba import jit, jitclass, types, typed 
+from numba import jit, types, typed 
+from numba.experimental import jitclass
 
 import matplotlib.pyplot as plt
 
