@@ -7,6 +7,8 @@ import itertools
 import math
 from collections import Counter
 from typing import Iterable, Mapping, Optional, Union
+import numba 
+from numba import jit, jitclass, types, typed 
 
 import matplotlib.pyplot as plt
 
@@ -185,6 +187,7 @@ def measure_and_plot(
 #   return qc_in
 
 
+@jitclass
 class IsingEnergyFunction:
     """A class to build the Ising Hamiltonian from data"""
 
