@@ -204,7 +204,7 @@ class IsingEnergyFunction:
     def get_h(self):
         return self.h
 
-    @jit(nopython= True)
+    # @jit(nopython= True)
     def get_energy(self, state: Union[str, np.array]) -> float:
         """'state' should be a bipolar state if it is an array"""
 
@@ -219,13 +219,13 @@ class IsingEnergyFunction:
             return 0.5 * np.dot(state.transpose(), self.J.dot(state)) + np.dot(
                 self.h.transpose(), state
             )
-    @jit(nopython= True)
+    # @jit(nopython= True)
     def get_partition_sum(self, beta: float = 1.0):  ## is computationally expensive
 
         all_configs = np.array(list(itertools.product([1, 0], repeat=self.num_spins)))
         return sum([self.get_boltzmann_prob(configbeta=beta) for config in all_configs])
 
-    @jit(nopython= True)
+    # @jit(nopython= True)
     def get_boltzmann_prob(
         self, state: Union[str, np.array], beta: float = 1.0, normalised=False
     ) -> float:
