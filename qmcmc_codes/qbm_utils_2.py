@@ -223,7 +223,7 @@ class IsingEnergyFunction:
     def get_partition_sum(self, beta: float = 1.0):  ## is computationally expensive
 
         all_configs = np.array(list(itertools.product([1, 0], repeat=self.num_spins)))
-        return sum([self.get_boltzmann_prob(configbeta=beta) for config in all_configs])
+        return np.sum([self.get_boltzmann_prob(config, beta=beta) for config in all_configs])
 
     # @jit(nopython= True)
     def get_boltzmann_prob(
@@ -612,7 +612,7 @@ def quantum_enhanced_mcmc(
 ###################################
 # Some New Helper functions
 ###################################
-@jit(nopython= True)
+# @jit(nopython= True)
 def states(num_spins: int) -> list:
     """
     Returns all possible binary strings of length n=num_spins
@@ -640,7 +640,7 @@ def magnetization_of_state(bitstring: str) -> float:
     magnetization = num_times_one - num_times_zero
     return magnetization
 
-@jit(nopython= True)
+# @jit(nopython= True)
 def dict_magnetization_of_all_states(list_all_possible_states: list) -> dict:
     """
     Returns magnetization for all unique states
@@ -667,7 +667,7 @@ def value_sorted_dict(dict_in, reverse=False):
     return sorted_dict
 
 
-@jit(nopython = True) ## enter samples, get normalised distn
+# @jit(nopython = True) ## enter samples, get normalised distn
 def get_distn(list_of_samples: list) -> dict:
     """
     Returns the dictionary of distn for input list_of_samples
@@ -679,7 +679,7 @@ def get_distn(list_of_samples: list) -> dict:
     return dict_to_return
 
 
-@jit(nopython= True)## Average
+# @jit(nopython= True)## Average
 def avg(dict_probabilities: dict, dict_observable_val_at_states: dict):
     """
     new version:
@@ -703,7 +703,7 @@ def avg(dict_probabilities: dict, dict_observable_val_at_states: dict):
     return avg
 
 
-@jit(nopython= True)### function to get running average of magnetization
+# @jit(nopython= True)### function to get running average of magnetization
 def running_avg_magnetization(list_states_mcmc: list):
     """
     Returns the running average magnetization
@@ -720,7 +720,7 @@ def running_avg_magnetization(list_states_mcmc: list):
         running_avg_mag[i] = avg(temp_prob, dict_mag_states_in_temp_prob)
     return running_avg_mag
 
-@jit(nopython= True)
+# @jit(nopython= True)
 def running_avg_magnetization_as_list(list_states_mcmc: list):
     """
     Returns the running average magnetization
