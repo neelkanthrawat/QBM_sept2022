@@ -198,13 +198,15 @@ class IsingEnergyFunction:
         self.beta = beta
         self.num_spins = len(h)
 
+    @property
     def get_J(self):
         return self.J
-
+    @property
     def get_h(self):
         return self.h
 
     # @jit(nopython= True)
+    @classmethod
     def get_energy(self, state: Union[str, np.array]) -> float:
         """'state' should be a bipolar state if it is an array"""
 
@@ -223,7 +225,7 @@ class IsingEnergyFunction:
     def get_partition_sum(self, beta: float = 1.0):  ## is computationally expensive
 
         all_configs = np.array(list(itertools.product([1, 0], repeat=self.num_spins)))
-        return np.sum([self.get_boltzmann_prob(config, beta=beta) for config in all_configs])
+        return np.sum([self.get_boltzmann_prob(config, beta=beta) for config in tqdm(all_configs)])
 
     # @jit(nopython= True)
     def get_boltzmann_prob(
@@ -261,9 +263,14 @@ class IsingEnergyFunction:
 
     def get_entropy(self, beta: float = 1.00) -> float:
 
-        return np.log(
-            self.get_partition_sum(beta)
-        ) - beta * self.get_observable_expectation(self.get_energy)
+        states_nbit= states(num_spins= self.num_spins)
+        prob_dist = dict( [ ( state, self.get_boltzmann_prob(state, beta=beta) ) for state in tqdm(states_nbit) ] )
+        
+        lmd  = lambda x : -1 * x * np.log2(x) 
+        prob_vals = np.array(list(prob_dist.values()))
+        entropy = np.sum(lmd(prob_vals))
+        
+        return entropy 
 
     def get_kldiv(self, prob_dict: dict):
 
@@ -626,7 +633,7 @@ def states(num_spins: int) -> list:
     possible_states = [f"{k:0{num_spins}b}" for k in range(0, num_possible_states)]
     return possible_states
 
-@jit(nopython= True)
+# @jit(nopython= True)
 def magnetization_of_state(bitstring: str) -> float:
     """
     Args:
