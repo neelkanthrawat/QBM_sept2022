@@ -262,6 +262,7 @@ class IsingEnergyFunction:
     def get_kldiv(self, prob_dict: dict):
 
         pass
+ 
 
 
 ################################################################################################
@@ -323,11 +324,11 @@ def classical_mcmc(
     Returns:
     Last 'dict_count_return_last_n_states' elements of states so collected (default value=500). one can then deduce the distribution from it!
     """
-    states = []
+    states_obt = []
     # current_state=f'{np.random.randint(0,num_elems):0{num_spins}b}'# bin_next_state=f'{next_state:0{num_spins}b}'
     current_state = initial_state
     print("starting with: ", current_state)
-    states.append(current_state)
+    states_obt.append(current_state)
 
     ## initialiiise observables
     # observable_dict = dict([ (elem, []) for elem in observables ])
@@ -346,12 +347,19 @@ def classical_mcmc(
         )
         current_state = next_state
         list_after_acceptance_step.append(current_state)
-        states.append(current_state)
+        states_obt.append(current_state)
         # WE DON;T NEED TO DO THIS! # reinitiate
         # qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)
 
     # returns dictionary of occurences for last "return_last_n_states" states
-    dict_count_return_last_n_states = Counter(states[-return_last_n_states:])
+    ### added by neel 22-11-22
+    all_possible_states_nbit=states(num_spins=num_spins)
+    states_sampled=states_obt[-return_last_n_states:]
+    states_not_obtained=uncommon_els_2_lists(all_possible_states_nbit, states_sampled)
+    val_states_not_obtained=[0]*len(states_not_obtained)
+    dict_states_not_obtained=dict(zip(states_not_obtained, val_states_not_obtained ))
+    ### added by neel 22-11-22
+    dict_count_return_last_n_states = merge_2_dict(dict(Counter(states_obt[-return_last_n_states:])), dict_states_not_obtained)
 
     if return_both:
         to_return = (
@@ -363,7 +371,6 @@ def classical_mcmc(
         to_return = dict_count_return_last_n_states
 
     return to_return
-
 
 ################################################################################################
 ##  Quantum Circuit for Quantum enhanced MCMC ##
@@ -557,13 +564,13 @@ def quantum_enhanced_mcmc(
     Returns:
     Last 'return_last_n_states' elements of states so collected (default value=500). one can then deduce the distribution from it!
     """
-    states = []
+    states_obt = []
     print("starting with: ", initial_state)
 
     ## initialise quantum circuit to current_state
     qc_s = initialise_qc(n_spins=num_spins, bitstring=initial_state)
     current_state = initial_state
-    states.append(current_state)
+    states_obt.append(current_state)
     ## intialise observables
     list_after_transition = []
     list_after_acceptance_step = []
@@ -583,13 +590,22 @@ def quantum_enhanced_mcmc(
         )
         current_state = next_state
         list_after_acceptance_step.append(current_state)
-        states.append(current_state)
+        states_obt.append(current_state)
         ## reinitiate
         qc_s = initialise_qc(n_spins=num_spins, bitstring=current_state)
 
-    dict_count_return_last_n_states = Counter(
-        states[-return_last_n_states:]
-    )  # dictionary of occurences for last "return_last_n_states" states
+    # dict_count_return_last_n_states = Counter(
+    #     states[-return_last_n_states:]
+    # )  # dictionary of occurences for last "return_last_n_states" states
+    ### added by neel 22-11-22
+    all_possible_states_nbit=states(num_spins=num_spins)
+    states_sampled=states_obt[-return_last_n_states:]
+    states_not_obtained=uncommon_els_2_lists(all_possible_states_nbit, states_sampled)
+    val_states_not_obtained=[0]*len(states_not_obtained)
+    dict_states_not_obtained=dict(zip(states_not_obtained, val_states_not_obtained ))
+    ### added by neel 22-11-22
+    dict_count_return_last_n_states = merge_2_dict(dict(Counter(states_obt[-return_last_n_states:])), dict_states_not_obtained)
+
 
     if return_both:
         to_return = (
@@ -602,10 +618,20 @@ def quantum_enhanced_mcmc(
 
     return to_return
 
-
 ###################################
 # Some New Helper functions
 ###################################
+def uncommon_els_2_lists(list_1,list_2):
+  return list(set(list_1).symmetric_difference(set(list_2)))
+
+def merge_2_dict(dict1, dict2):
+    return({**dict1,**dict2})
+
+def sort_dict_by_keys(dict_in:dict):
+  from collections import OrderedDict
+  return dict(OrderedDict(sorted(dict_in.items())))
+
+
 def states(num_spins: int) -> list:
     """
     Returns all possible binary strings of length n=num_spins
