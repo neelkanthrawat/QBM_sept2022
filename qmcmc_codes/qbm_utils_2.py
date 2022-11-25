@@ -7,6 +7,7 @@ import itertools
 import math
 from collections import Counter
 from typing import Iterable, Mapping, Optional, Union
+from collections import OrderedDict
 
 import matplotlib.pyplot as plt
 
@@ -628,7 +629,7 @@ def merge_2_dict(dict1, dict2):
     return({**dict1,**dict2})
 
 def sort_dict_by_keys(dict_in:dict):
-  from collections import OrderedDict
+  
   return dict(OrderedDict(sorted(dict_in.items())))
 
 
