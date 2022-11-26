@@ -194,17 +194,15 @@ class IsingEnergyFunction:
         self.h = h
         self.beta = beta
         self.num_spins = len(h)
-    
-    @property
+
     def get_J(self):
         return self.J
-    
-    @property
+
     def get_h(self):
         return self.h
 
     def get_energy(self, state: Union[str, np.array]) -> float:
-        """ 'state' should be a bipolar state if it is an array"""
+        """'state' should be a bipolar state if it is an array"""
 
         if isinstance(state, str):
             state = np.array([-1 if elem == "0" else 1 for elem in state])
@@ -218,54 +216,22 @@ class IsingEnergyFunction:
                 self.h.transpose(), state
             )
 
-    # def get_partition_sum(self, beta: float = 1.0):  ## is computationally expensive
-    #     """ get normalisation sum (**partition function) over the boltzmann factors """
+    def get_partition_sum(self, beta: float = 1.0):  ## is computationally expensive
 
-    #     all_configs = np.array(list(itertools.product([1, 0], repeat=self.num_spins)))
-    #     return sum([self.get_boltzmann_prob(configbeta=beta) for config in all_configs])
+        all_configs = np.array(list(itertools.product([1, 0], repeat=self.num_spins)))
+        return sum([self.get_boltzmann_prob(configbeta=beta) for config in all_configs])
 
     def get_boltzmann_prob(
-        self, state: Union[str, np.array], beta: float = 1.0
+        self, state: Union[str, np.array], beta: float = 1.0, normalised=False
     ) -> float:
 
-        """ get un-normalised boltzmann probability of a given state """
-        return np.exp(-1 * beta * self.get_energy(state))
+        if normalised:
+            return np.exp(-1 * beta * self.get_energy(state)) / self.get_partition_sum(
+                beta
+            )
 
-    def get_boltzmann_distribution(
-        self, beta:float = 1.0, sorted:bool = False, plot_dist:bool = False
-    ) -> float:
-        """ get normalised boltzmann distribution over states 
-
-            ARGS:
-            ----
-            beta : inverse temperature (1/ T)
-            sorted  : if True then the states are sorted in in descending order of their probability
-            plot_dist : if True then plots histogram corresponding to the boltzmann distribution
-
-            RETURNS:
-            -------
-
-            'dict' corresponding to the distribution
-        """
-        all_configs = [f"{k:0{self.num_spins}b}" for k in range(0, 2 ** (self.num_spins))]
-        bltzmann_probs = dict( [ ( state, self.get_boltzmann_prob(state, beta= beta) ) for state in all_configs ] )
-        partition_sum=np.sum(np.array(list(bltzmann_probs.values())))
-        prob_vals=list(np.array(list(bltzmann_probs.values()))*(1./partition_sum))
-
-        bpd= dict(zip(all_configs, prob_vals ))
-        bpd_sorted_desc= value_sorted_dict( bpd, reverse=True )
-        
-        if plot_dist:
-                plt.figure(2)
-        plot_bargraph_desc_order(bpd_sorted_desc, label="analytical",plot_first_few=30); plt.legend()
-        
-        
-        if sorted: 
-            return bpd_sorted_desc
-        else :
-            return bpd
-
-
+        else:
+            return np.exp(-1 * beta * self.get_energy(state))
 
     def get_observable_expectation(self, observable, beta: float = 1.0) -> float:
         """Return expectation value of a classical observables
