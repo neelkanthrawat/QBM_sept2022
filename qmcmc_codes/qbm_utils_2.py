@@ -369,6 +369,7 @@ def classical_mcmc(
     # observable_dict = dict([ (elem, []) for elem in observables ])
     list_after_transition = []
     list_after_acceptance_step = []
+    poss_states=states(num_spins=num_spins)# list of all possible states
 
     for i in tqdm(range(0, N_hops)):
         # get sprime
@@ -387,15 +388,8 @@ def classical_mcmc(
         # qc_s=initialise_qc(n_spins=num_spins, bitstring=current_state)
 
     # returns dictionary of occurences for last "return_last_n_states" states
-    ### added by neel 22-11-22
-    all_possible_states_nbit=states(num_spins=num_spins)
-    states_sampled=states_obt[-return_last_n_states:]
-    states_not_obtained=uncommon_els_2_lists(all_possible_states_nbit, states_sampled)
-    val_states_not_obtained=[0]*len(states_not_obtained)
-    dict_states_not_obtained=dict(zip(states_not_obtained, val_states_not_obtained ))
-    ### added by neel 22-11-22
-    dict_count_return_last_n_states = merge_2_dict(dict(Counter(states_obt[-return_last_n_states:])), dict_states_not_obtained)
-
+    dict_count_return_last_n_states=dict(zip(poss_states,[0]*(len(poss_states))))
+    dict_count_return_last_n_states.update(dict(Counter(states_obt[-return_last_n_states:])))
     if return_both:
         to_return = (
             dict_count_return_last_n_states,
@@ -609,6 +603,7 @@ def quantum_enhanced_mcmc(
     ## intialise observables
     list_after_transition = []
     list_after_acceptance_step = []
+    poss_states=states(num_spins=num_spins)
 
     for i in tqdm(range(0, N_hops)):
         # print("i: ", i)
@@ -632,15 +627,9 @@ def quantum_enhanced_mcmc(
     # dict_count_return_last_n_states = Counter(
     #     states[-return_last_n_states:]
     # )  # dictionary of occurences for last "return_last_n_states" states
-    ### added by neel 22-11-22
-    all_possible_states_nbit=states(num_spins=num_spins)
-    states_sampled=states_obt[-return_last_n_states:]
-    states_not_obtained=uncommon_els_2_lists(all_possible_states_nbit, states_sampled)
-    val_states_not_obtained=[0]*len(states_not_obtained)
-    dict_states_not_obtained=dict(zip(states_not_obtained, val_states_not_obtained ))
-    ### added by neel 22-11-22
-    dict_count_return_last_n_states = merge_2_dict(dict(Counter(states_obt[-return_last_n_states:])), dict_states_not_obtained)
-
+    #
+    dict_count_return_last_n_states=dict(zip(poss_states,[0]*(len(poss_states))))
+    dict_count_return_last_n_states.update(dict(Counter(states_obt[-return_last_n_states:])))
 
     if return_both:
         to_return = (
